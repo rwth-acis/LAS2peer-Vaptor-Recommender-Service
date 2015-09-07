@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<service consumes="*" name="i5.las2peer.services.videoAdapter.AdapterClass" path="adapter" produces="text/plain" version="0.1">
+  <methods>
+    <method httpMethod="get" name="getSwaggerResourceListing" path="api-docs" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters/>
+    </method>
+    <method httpMethod="get" name="getSwaggerApiDeclaration" path="api-docs/{tlr}" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="path" index="0" name="tlr" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="get" name="getPlaylist" path="getPlaylist" type="java.lang.String">
+      <parameters>
+        <parameter annotation="query" default="*" index="0" name="search" type="java.lang.String"/>
+      </parameters>
+    </method>
+  </methods>
+</service>
