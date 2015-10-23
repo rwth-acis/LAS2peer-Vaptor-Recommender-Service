@@ -59,15 +59,18 @@ public class DatabaseManager
 			Class.forName(driver).newInstance();
 			Connection conn = DriverManager.getConnection(url+dbName,userName,password);
 			
-			String insertQuery = "SELECT * FROM searches";
+			String selectQuery = "select max(id) id, result, user, query, domain FROM "
+					+ "searches group by query";
+			//String selectQuery = "SELECT * FROM searches";
 			
-			PreparedStatement pstmt = conn.prepareStatement(insertQuery);
+			PreparedStatement pstmt = conn.prepareStatement(selectQuery);
 			res = pstmt.executeQuery();
 
 			while(res.next()){
 				
 				searches.add(res.getString("query"));
 				searches.add(res.getString("result"));
+				searches.add(res.getString("domain"));
 			}
 
 			conn.close();

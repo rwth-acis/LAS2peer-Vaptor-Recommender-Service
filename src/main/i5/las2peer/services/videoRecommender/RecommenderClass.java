@@ -18,17 +18,20 @@ import i5.las2peer.restMapper.annotations.swagger.ApiResponses;
 import i5.las2peer.restMapper.annotations.swagger.Summary;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
+import i5.las2peer.services.videoRecommender.util.OIDC;
 import i5.las2peer.services.videoRecommender.database.DatabaseManager;
 import i5.las2peer.services.videoRecommender.util.LocationService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 //import org.apache.commons.httpclient.HttpClient;
@@ -59,6 +62,13 @@ import org.jivesoftware.smack.MessageListener;
 
 
 
+
+
+
+
+
+
+
 //import i5.las2peer.services.videoCompiler.idGenerateClient.IdGenerateClientClass;
 //import org.junit.experimental.theories.ParametersSuppliedBy;
 //import com.sun.jersey.multipart.FormDataParam;
@@ -73,7 +83,7 @@ import javax.ws.rs.core.MediaType;
  * 
  * 
  */
-@Path("recommend")
+@Path("recommendation")
 @Version("0.1")
 @ApiInfo(title = "Adapter Service", 
 	description = "<p>A RESTful service for Adaptation for Vaptor.</p>", 
@@ -96,7 +106,8 @@ public class RecommenderClass extends Service {
 	private String charEncoding;
 	private String charSet;
 	private String collation;
-	
+	private String userPreferenceService;
+	private String userinfo;
 	
 	
 
@@ -118,7 +129,7 @@ public class RecommenderClass extends Service {
 		//dbm = new DatabaseManager(username, password, host, port, database);
 	}
 
-	@GET
+	/*@GET
 	@Path("")
 	//@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public String getRecommendations(@QueryParam(name="username" , defaultValue = "*") 
@@ -134,7 +145,9 @@ public class RecommenderClass extends Service {
 		//for(int i=0; i<searches.size(); i+=2)
 		int i=0;
 		boolean b=false;
-		while(!searches.isEmpty()){
+		//while(!searches.isEmpty() && !searches.get(i).isEmpty()){
+		while(i<searches.size()){
+			
 			b=false;
 			for(int j=0;j<splittedQuery.length;j++){
 				if(searches.get(i).contains(splittedQuery[j]))
@@ -143,11 +156,12 @@ public class RecommenderClass extends Service {
 			if(!b){
 				searches.remove(i);
 				searches.remove(i+1);
+				searches.remove(i+2);
 				
 			}
 			else{
 				recommendations.put(searches.get(i+1));
-				i+=2;
+				i+=3;
 			}
 				
 		}
@@ -155,10 +169,91 @@ public class RecommenderClass extends Service {
 		
 		
 		return "";
+	}*/
+	
+	@GET
+	@Path("")
+	//@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public String getInitialRecommendations(@QueryParam(name = "Authorization", defaultValue = "") String token, 
+			@QueryParam(name="mobile" , defaultValue = "false") boolean mobile){
+
+String username = null;
+		
+		System.out.println("TOKEN: "+token);
+		
+		if(token!=null){
+			   token = token.replace("Bearer ","");
+			   username = OIDC.verifyAccessToken(token, userinfo);
+		}
+		
+		System.out.println("username: "+username);
+		dbm = new DatabaseManager();
+		dbm.init(driverName, databaseServer, port, database, this.username, password, hostName);
+		
+		
+		//String preferenceString = getResponse(userPreferenceService+"?username="+username);
+		//JSONObject preferencesJSON = new JSONObject(preferenceString);
+		
+		
+		
+		List<String> searches = dbm.getSearches();
+		JSONArray recommendations = new JSONArray();
+		//String[] splittedQuery = query.split(" ");
+		//for(int i=0; i<searches.size(); i+=2)
+		String expLevel;
+		int i=0;
+		//boolean b=false;
+		//while(!searches.isEmpty()&& !searches.get(i).isEmpty()){
+		while(i<searches.size()){
+			System.out.println("search is not empty!");
+			expLevel = getResponse(userPreferenceService+"/expertise"+"?username="+username+
+					"&domain="+searches.get(i+2));
+			
+			/*System.out.println("Explevel: "+expLevel);
+			System.out.println("searches i: "+searches.get(i));
+			System.out.println("searches i+1: "+searches.get(i+1));
+			System.out.println("searches i+2: "+searches.get(i+2));*/
+			
+			if(mobile){
+				System.out.println("Mobile");
+				if(!expLevel.equals("0") && i<15){
+					recommendations.put(searches.get(i));
+					recommendations.put(searches.get(i+1));
+					i+=3;
+				}
+				else if(expLevel.equals("0")){
+					searches.remove(i);
+					searches.remove(i+1);
+					searches.remove(i+2);
+				}
+				else if(i>=15){
+					i+=3;
+				}
+			}
+			else{
+				System.out.println("Desktop");
+				if(!expLevel.equals("0")){
+					recommendations.put(searches.get(i));
+					recommendations.put(searches.get(i+1));
+					i+=3;
+				}
+				else{
+					searches.remove(i);
+					searches.remove(i+1);
+					searches.remove(i+2);
+				}
+			}
+		}
+		
+		
+		
+		
+		
+		return recommendations.toString();
 	}
 	
 	
-	@GET
+	/*@GET
 	@Path("pubtest")
 	public void pubsub(@QueryParam(name="username" , defaultValue = "*") 
 	String username) {
@@ -184,7 +279,7 @@ public class RecommenderClass extends Service {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}*/
-	            }
+	            /*}
 	        });
 			
 			
@@ -198,7 +293,7 @@ public class RecommenderClass extends Service {
 	        }*/
         
         
-        } catch (XMPPException e) {
+        /*} catch (XMPPException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
@@ -207,170 +302,69 @@ public class RecommenderClass extends Service {
 
 
         
-	}	 	
+	}*/	 	
 	    	
 	
 	
-	
-	    
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/*
-	@GET
-	@Path("getPlaylist")
-	public String getPlaylist(@QueryParam(name="Username" , defaultValue = "*") String username, @QueryParam(name = "search", defaultValue = "*" ) String searchString){
-
-		System.out.println("SEARCH: "+searchString);
-		dbm = new DatabaseManager();
-		dbm.init(driverName, databaseServer, port, database, this.username, password, hostName);
-		
-		dbm.userExists(username);
-		
-		String annotations = getAnnotations(searchString, username);
-	    
-		
-		return annotations;
-	}
-	
-	
-	private String getAnnotations(String searchString, String username){
-		System.out.println("An1");
-		CloseableHttpResponse response = null;
-		URI request = null;
-		JSONArray finalResult = null;
-		 int size;
-		
-		try {
+	// Get response from the given uri
+		private String getResponse(String uri){
 			
-			// Get Annotations
-			request = new URI("http://eiche:7073/annotations/annotations?q="+searchString.replaceAll(" ", ",")+"&part=duration,objectCollection,location,objectId,text,time,title,keywords&collection=TextTypeAnnotation");
+			CloseableHttpResponse response = null;
+			URI httpRequest;
+			String preferenceString = null;
 			
-			CloseableHttpClient httpClient = HttpClients.createDefault();
-			HttpGet get = new HttpGet(request);
+			try {
+				httpRequest = new URI(uri);
 			
-			response = httpClient.execute(get);
-			
-			BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-			
-			StringBuilder content = new StringBuilder();
-			String line;
-			
-			while (null != (line = rd.readLine())) {
-			    content.append(line);
+				CloseableHttpClient httpPreferenceService = HttpClients.createDefault();
+				HttpGet getPreferences = new HttpGet(httpRequest);
+				response = httpPreferenceService.execute(getPreferences);
+				
+		        HttpEntity entity = response.getEntity();
+		        
+		        if (entity != null) {
+		            InputStream instream = entity.getContent();
+		            preferenceString = convertStreamToString(instream);
+		            //System.out.println("RESPONSE: " + preferenceString);
+		            instream.close();
+		        }
+	        
+			} catch (URISyntaxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+	        
+	        return preferenceString;
 			
-			// Parse Response to JSON
-			finalResult = new JSONArray(content.toString());
-			String[] objectIds = new String[finalResult.length()];
-			float time[] = new float[finalResult.length()];
-			float duration[] = new float[finalResult.length()];
-			// Remove the non-video annotations
-			int i=0;
-			while(!finalResult.isNull(i)){
-				JSONObject object = finalResult.getJSONObject(i);
-				if(!"Videos".equals(object.getString("objectCollection"))){
-					finalResult.remove(i);
-			    }
-				else{
-					//System.out.println("An2");
-					// Get the object Ids from the response
-					objectIds[i] = new String(object.getString("objectId"));
-					
-					//System.out.println("TIME: "+ Float.valueOf(object.getString("time")));
-					
-					time[i] = Float.valueOf(object.getString("time"));
-					duration[i] = Float.valueOf(object.getString("duration"));
-					
-					i++;
-					System.out.println("An3");
-				}
-			}
-			
-			
-			// Temporary code, to limit entries to 3
-			//int j=3;
-			//while(!finalResult.isNull(j)){
-				//	finalResult.remove(j);
-			//}
-			
-			System.out.println("An4");
-			// The size of the following arrays would be 'size', but for now it is 'j' 
-			size=i;
-			//int j = size;
-			String[] videos = new String[size];
-			String[] languages = new String[size];
-			
-			// Once again, 'j' is temporary, it will be 'size' 
-			videos = getVideoURLs(objectIds,size);
-			languages = getVideoLang(objectIds,size);
-			
-			for(int k=0;k<size;k++){
-				float endtime = duration[k]+time[k];
-				videos[k]+="#t="+time[k]+","+endtime;
-			}
-			
-			JSONObject object;
-			
-			for(int k=0;k<size;k++){
-				object = finalResult.getJSONObject(k);
-				object.append("videoURL", videos[k]);
-				//object.append("lang", languages[k]);
-				object.put("lang", languages[k]);
-			}
-			//System.out.println("FINAL RESULT: "+finalResult.toString());
-			FOSPClass fpc = new FOSPClass();
-			finalResult = fpc.applyPreferences(finalResult, username, driverName, databaseServer, port, database, this.username, password, hostName);
-			
-			RelevanceSorting rsort = new RelevanceSorting();
-			LocationSorting lsort = new LocationSorting();
-			System.out.println("RELEVANCE");
-			finalResult = rsort.sort(finalResult, searchString);
-			//double userLat = 50.7743273, userLong = 6.1065564;
-			
-			dbm = new DatabaseManager();
-			dbm.init(driverName, databaseServer, port, database, this.username, password, hostName);
-			String[] preferences = dbm.getPreferences(username);
-			LocationService ls = new LocationService();
-			double[] userltln = ls.getLongitudeLatitude(preferences[4]);
-			finalResult = lsort.sort(finalResult, userltln[0], userltln[1]);
-			
-			System.out.println("check");
-			
-			
-			
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
-		return finalResult.toString();
-
-	}
-*/			
-	
-	
-	
-	
-	
-	
-	
-	
+		private static String convertStreamToString(InputStream is) {
+			
+		    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		    StringBuilder sb = new StringBuilder();
+		
+		    String line = null;
+		    try {
+		        while ((line = reader.readLine()) != null) {
+		            sb.append(line + "\n");
+		        }
+		    } catch (IOException e) {
+		        e.printStackTrace();
+		    } finally {
+		        try {
+		            is.close();
+		        } catch (IOException e) {
+		            e.printStackTrace();
+		        }
+		    }
+		    return sb.toString();
+		}
 	
 	
 	// ================= Swagger Resource Listing & API Declarations

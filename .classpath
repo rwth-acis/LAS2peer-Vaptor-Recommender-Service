@@ -54,9 +54,6 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/commons-httpclient-3.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.4.jar"/>
-	<classpathentry kind="lib" path="lib/httpclient-4.3.6.jar"/>
-	<classpathentry kind="lib" path="lib/javax.ws.rs-api-2.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/jersey-core-1.19.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/vertx-core-3.0.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/vertx-codegen-3.0.0.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/vertx-docgen-3.0.0.jar"/>
@@ -64,5 +61,8 @@
 	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/vertx-platform-2.1.6.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/smack-3.2.1.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/smackx-3.2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/httpclient-4.3.6.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/javax.ws.rs-api-2.0.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Aarij/git/LAS2peer Vaptor Services/LAS2peer-Vaptor-Recommender-Service/lib/jersey-core-1.19.jar"/>
 	<classpathentry kind="output" path="tmp/classes"/>
 </classpath>
