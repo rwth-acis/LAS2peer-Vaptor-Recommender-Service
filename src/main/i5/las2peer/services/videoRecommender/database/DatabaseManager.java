@@ -1,15 +1,12 @@
 package i5.las2peer.services.videoRecommender.database;
 
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet; 
-import java.sql.Statement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 
 //import de.dbis.util.GetProperty;
@@ -79,34 +76,5 @@ public class DatabaseManager
 		}
 		return searches;
 	}
-	
-
-	/*public void saveSearch(String searchString, String result, String username){
-		
-		int rowCount = 0;
-		try {
-			Class.forName(driver).newInstance();
-			Connection conn = DriverManager.getConnection(url+dbName,userName,password);
-			
-			String insertQuery = "insert into searches (query, result, user) values (?, ?, ?)";
-			
-			PreparedStatement pstmt = conn.prepareStatement(insertQuery);
-			pstmt.setString(1, searchString);
-			pstmt.setString(2, result);
-			pstmt.setString(3, username);
-			
-			rowCount = pstmt.executeUpdate();
-			
-			conn.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}*/
-	
-	
-	
-	
-	
 	
 }	

@@ -2,11 +2,8 @@ package i5.las2peer.services.videoRecommender;
 
 import i5.las2peer.api.Service;
 import i5.las2peer.restMapper.HttpResponse;
-//import i5.las2peer.restMapper.MediaType;
 import i5.las2peer.restMapper.RESTMapper;
 import i5.las2peer.restMapper.annotations.GET;
-//import i5.las2peer.restMapper.annotations.POST;
-import i5.las2peer.restMapper.annotations.Consumes;
 import i5.las2peer.restMapper.annotations.Path;
 import i5.las2peer.restMapper.annotations.PathParam;
 import i5.las2peer.restMapper.annotations.Produces;
@@ -18,9 +15,8 @@ import i5.las2peer.restMapper.annotations.swagger.ApiResponses;
 import i5.las2peer.restMapper.annotations.swagger.Summary;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
-import i5.las2peer.services.videoRecommender.util.OIDC;
 import i5.las2peer.services.videoRecommender.database.DatabaseManager;
-import i5.las2peer.services.videoRecommender.util.LocationService;
+import i5.las2peer.services.videoRecommender.util.OIDC;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,53 +24,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
+
+import javax.ws.rs.core.MediaType;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
-//import org.apache.commons.httpclient.HttpClient;
-//import org.apache.commons.httpclient.HttpMethod;
-//import org.apache.commons.httpclient.HttpStatus;
-//import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import com.arangodb.entity.GraphEntity;
-
-import org.jivesoftware.smack.Chat;
-import org.jivesoftware.smack.ChatManager;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.MessageListener;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//import i5.las2peer.services.videoCompiler.idGenerateClient.IdGenerateClientClass;
-//import org.junit.experimental.theories.ParametersSuppliedBy;
-//import com.sun.jersey.multipart.FormDataParam;
-//import com.sun.jersey.*;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 
 /**
  * LAS2peer Service
@@ -174,16 +136,23 @@ public class RecommenderClass extends Service {
 	@GET
 	@Path("")
 	//@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public String getInitialRecommendations(@QueryParam(name = "Authorization", defaultValue = "") String token, 
+	public HttpResponse getInitialRecommendations(@QueryParam(name = "Authorization", defaultValue = "") String token, 
 			@QueryParam(name="mobile" , defaultValue = "false") boolean mobile){
 
-String username = null;
+		String username = null;
 		
 		System.out.println("TOKEN: "+token);
 		
 		if(token!=null){
 			   token = token.replace("Bearer ","");
 			   username = OIDC.verifyAccessToken(token, userinfo);
+		}
+		
+		if(username.isEmpty() || username.equals("undefined") || 
+				username.equals("error")){
+			HttpResponse r = new HttpResponse("User is not signed in!");
+			r.setStatus(401);
+			return r;
 		}
 		
 		System.out.println("username: "+username);
@@ -246,64 +215,16 @@ String username = null;
 		}
 		
 		
+		HttpResponse r = new HttpResponse(recommendations.toString());
+		r.setStatus(200);
+		return r;
 		
 		
 		
-		return recommendations.toString();
 	}
 	
 	
-	/*@GET
-	@Path("pubtest")
-	public void pubsub(@QueryParam(name="username" , defaultValue = "*") 
-	String username) {
-		System.out.println("Username: "+username);
-		XMPP xmpp = new XMPP();
-        XMPPConnection connection = xmpp.getConnection();
-        try {
-        	System.out.println("USER:"+ username+"@role-sandbox.eu");
-			Chat chat = connection.getChatManager().createChat(username+"@role-sandbox.eu", new MessageListener() {
 
-	            public void processMessage(Chat chat, Message message) {
-	                // Print out any messages we get back to standard out.
-	                //System.out.println("Received message: " + message.getBody());
-	                /*try {
-	                	Thread.sleep(500);
-	                	System.out.println("sending");
-						chat.sendMessage("Howdy test2!");
-					} catch (XMPPException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						System.out.println("XMPP EXCEPTION");
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}*/
-	            /*}
-	        });
-			
-			
-			chat.sendMessage("Howdy test1!");
-			//System.out.println("Sent");
-			
-			
-
-	        /*while (true) {
-	        	Thread.sleep(50);
-	        }*/
-        
-        
-        /*} catch (XMPPException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-        
-
-
-
-        
-	}*/	 	
-	    	
 	
 	
 	// Get response from the given uri
