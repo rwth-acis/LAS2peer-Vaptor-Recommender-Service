@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import com.arangodb.entity.GraphEntity;
 
@@ -69,6 +70,7 @@ public class RecommenderClass extends Service {
 	private String charSet;
 	private String collation;
 	private String userPreferenceService;
+	private String adapterService;
 	private String userinfo;
 	
 	
@@ -135,7 +137,6 @@ public class RecommenderClass extends Service {
 	
 	@GET
 	@Path("")
-	//@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public HttpResponse getInitialRecommendations(@QueryParam(name = "Authorization", defaultValue = "") String token, 
 			@QueryParam(name="mobile" , defaultValue = "false") boolean mobile){
 
@@ -173,10 +174,13 @@ public class RecommenderClass extends Service {
 		int i=0;
 		//boolean b=false;
 		//while(!searches.isEmpty()&& !searches.get(i).isEmpty()){
+		int count = 0;
 		while(i<searches.size()){
-			System.out.println("search is not empty!");
-			expLevel = getResponse(userPreferenceService+"/expertise"+"?username="+username+
+			
+			expLevel = getResponse(userPreferenceService+"/expertise"+"?Authorization=Bearer%20"+token+
 					"&domain="+searches.get(i+2));
+			
+			System.out.println("search is not empty! "+expLevel);
 			
 			/*System.out.println("Explevel: "+expLevel);
 			System.out.println("searches i: "+searches.get(i));
@@ -185,31 +189,40 @@ public class RecommenderClass extends Service {
 			
 			if(mobile){
 				System.out.println("Mobile");
-				if(!expLevel.equals("0") && i<15){
+				if(!(Float.parseFloat(expLevel.replace("\n", ""))==0) && count<5){
+				//if(!expLevel.equals("0") && i<15){
+					count++;
 					recommendations.put(searches.get(i));
 					recommendations.put(searches.get(i+1));
 					i+=3;
 				}
-				else if(expLevel.equals("0")){
-					searches.remove(i);
+				else if(Float.parseFloat(expLevel.replace("\n", ""))==0){
+					i+=3;
+					/*searches.remove(i);
 					searches.remove(i+1);
-					searches.remove(i+2);
+					searches.remove(i+2);*/
 				}
-				else if(i>=15){
+				else if(count>=5){
 					i+=3;
 				}
 			}
 			else{
-				System.out.println("Desktop");
-				if(!expLevel.equals("0")){
+				System.out.println("Desktop "+Float.parseFloat(expLevel.replace("\n", "")));
+				if(!(Float.parseFloat(expLevel.replace("\n", ""))==0) && count<10){
+					count++;
+					System.out.println("NOT ZERO: "+expLevel);
 					recommendations.put(searches.get(i));
 					recommendations.put(searches.get(i+1));
 					i+=3;
 				}
-				else{
-					searches.remove(i);
+				else if(Float.parseFloat(expLevel.replace("\n", ""))==0){
+					i+=3;
+					/*searches.remove(i);
 					searches.remove(i+1);
-					searches.remove(i+2);
+					searches.remove(i+2);*/
+				}
+				else if(count>=10){
+					i+=3;
 				}
 			}
 		}
@@ -223,8 +236,103 @@ public class RecommenderClass extends Service {
 		
 	}
 	
-	
+	@GET
+	@Path("relatedSearch")
+	public HttpResponse getRelatedSearches(@QueryParam(name = "Authorization", defaultValue = "") String token, 
+			@QueryParam(name="mobile" , defaultValue = "false") boolean mobile,
+			@QueryParam(name = "search", defaultValue = "*" ) String searchString){
 
+		String username = null;
+		
+		System.out.println("TOKEN: "+token);
+		
+		if(token!=null){
+			   token = token.replace("Bearer ","");
+			   username = OIDC.verifyAccessToken(token, userinfo);
+		}
+		
+		if(username.isEmpty() || username.equals("undefined") || 
+				username.equals("error")){
+			HttpResponse r = new HttpResponse("User is not signed in!");
+			r.setStatus(401);
+			return r;
+		}
+		
+		System.out.println("username: "+username);
+		dbm = new DatabaseManager();
+		dbm.init(driverName, databaseServer, port, database, this.username, password, hostName);
+		
+		String queries[] = searchString.split(" ");
+		
+		JSONArray recommendations = new JSONArray();
+		
+		JSONArray result;
+		
+		for(int i=0;i<queries.length;i++){
+			
+			String searchResult = getResponse(adapterService+"/playlist"+"?Authorization=Bearer%20"+token+
+					"&sub=123&search="+queries[i]+"&sequence=LRDOW");
+			System.out.println(queries[i]+" SEARCHRESULT 1 "+searchResult);
+			
+			try{
+				result = new JSONArray(searchResult);
+				if(result.length()>0){
+					recommendations.put(queries[i]);
+					recommendations.put(searchResult);
+				}
+			}
+			catch (JSONException e){
+				
+			}
+			for(int j=0;j<queries.length;j++){
+				
+				if(i!=j){
+					searchResult = getResponse(adapterService+"/playlist"+"?Authorization=Bearer%20"+token+
+							"&sub=123&search="+queries[i]+"%20"+queries[j]+"&sequence=LRDOW");
+					System.out.println(queries[i]+" "+queries[j]+" SEARCHRESULT 2 "+searchResult);
+					try{
+						result = new JSONArray(searchResult);
+						if(result.length()>0){
+							recommendations.put(queries[i]+" "+queries[j]);
+							recommendations.put(searchResult);
+						}
+					}catch (JSONException e){
+						
+					}
+				}
+			
+			
+			/*if(i==0){
+				searchResult = searchResult.substring(0, searchResult.length()-1);
+				searchResult+=",";
+			}
+			
+			if(i!=0 && i!=queries.length-1){
+				searchResult = searchResult.substring(1);
+				searchResult = searchResult.substring(0, searchResult.length()-1);
+				searchResult+=",";
+			}
+			
+			if(i==queries.length-1){
+				searchResult = searchResult.substring(1);
+			}*/
+			//recommendations+=searchResult;
+			}
+		}
+		
+		
+		if(recommendations.length()==0){
+			
+			HttpResponse r = new HttpResponse("No Annotations found!");
+			r.setStatus(204);
+			return r;
+		}
+		
+		
+		HttpResponse r = new HttpResponse(recommendations.toString());
+		r.setStatus(200);
+		return r;
+	}
 	
 	
 	// Get response from the given uri
