@@ -284,7 +284,7 @@ public class RecommenderClass extends Service {
 			catch (JSONException e){
 				
 			}
-			for(int j=0;j<queries.length;j++){
+			for(int j=i+1;j<queries.length;j++){
 				
 				if(i!=j){
 					searchResult = getResponse(adapterService+"/playlist"+"?Authorization=Bearer%20"+token+
